@@ -1,0 +1,439 @@
+@if (!role()) {
+
+<div class="min-h-screen flex items-center justify-center p-4 bg-slate-100">
+
+    <div class="panel w-full max-w-md shadow-xl">
+
+        <div class="text-center mb-6">
+
+            <div class="text-4xl mb-2">🛡️</div>
+
+            <h1 class="text-3xl font-extrabold text-blue-950">IMHOTEP</h1>
+
+            <p class="text-slate-500">Control de herramientas y EPP</p>
+
+        </div>
+
+        <form (ngSubmit)="login()" class="grid gap-4"><label class="field">Usuario<input name="username"
+
+                    [(ngModel)]="username" autocomplete="username" required></label><label
+
+                class="field">Contraseña<input type="password" name="password" [(ngModel)]="password"
+
+                    required></label><button class="btn-main">Ingresar</button></form>
+
+        <p class="text-xs text-slate-500 mt-4">Demostración local: almacenista, supervisor, compras o rh. Contraseña:
+
+            demo123.</p>@if(message()){<p class="bad mt-3">{{message()}}</p>}
+
+    </div>
+
+</div>
+
+} @else {
+
+<div class="min-h-screen lg:flex">
+
+    <aside class="bg-slate-950 text-white lg:w-64 p-5 print:hidden">
+
+        <h1 class="font-extrabold text-2xl">🛡️ IMHOTEP</h1>
+
+        <p class="text-slate-400 text-sm mt-1 mb-6">Gestión de almacenes</p>
+
+        <nav class="grid grid-cols-2 lg:grid-cols-1 gap-2">@for(s of visible();track s.id){<button
+
+                (click)="navigate(s.id)" class="text-left rounded-lg px-3 py-2 text-sm"
+
+                [class.bg-blue-700]="page()===s.id">{{s.name}}</button>}</nav>
+
+        <div class="mt-8 text-xs text-slate-400">Perfil: {{role()}}<button class="block mt-3 underline"
+
+                (click)="logout()">Cerrar sesión</button></div>
+
+    </aside>
+
+    <main class="flex-1 p-4 lg:p-8 max-w-7xl mx-auto w-full">
+
+        <header class="mb-6">
+
+            <p class="text-sm text-slate-500">IMHOTEP / {{page()}}</p>
+
+            <h2 class="text-2xl font-bold text-slate-900">{{ pageTitle() }}</h2>
+
+        </header>
+
+        @if(message()){<div class="p-3 mb-5 rounded-lg border" [class.bg-red-50]="error()"
+
+            [class.bg-green-50]="!error()" [class.bad]="error()" [class.ok]="!error()">{{message()}}</div>}
+
+        @if(page()==='dashboard'){
+
+        <div class="grid sm:grid-cols-3 gap-4 mb-6">
+
+            <div class="panel">
+
+                <p class="text-slate-500 text-sm">Almacenes</p>
+
+                <p class="text-3xl font-bold">6</p>
+
+            </div>
+
+            <div class="panel">
+
+                <p class="text-slate-500 text-sm">Artículos disponibles</p>
+
+                <p class="text-3xl font-bold">{{store.data().items.length}}</p>
+
+            </div>
+
+            <div class="panel">
+
+                <p class="text-slate-500 text-sm">Adeudos activos</p>
+
+                <p class="text-3xl font-bold">{{activeLoans().length}}</p>
+
+            </div>
+
+        </div>
+
+        <div class="panel">
+
+            <h3 class="font-bold mb-3">Equipos pendientes de devolución</h3>
+
+            <div class="overflow-x-auto">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Trabajador</th>
+
+                            <th>Equipo</th>
+
+                            <th>Cantidad</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>@for(l of activeLoans();track l.worker.id+l.item.id){<tr>
+
+                            <td>{{l.worker.name}}</td>
+
+                            <td>{{l.item.name}}</td>
+
+                            <td>{{l.quantity}}</td>
+
+                        </tr>}@empty{<tr>
+
+                            <td colspan="3">No hay adeudos activos.</td>
+
+                        </tr>}</tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+        }
+
+        @if(['entrega','devolucion','traspaso'].includes(page())){
+
+        <div class="panel max-w-3xl">
+
+            <h3 class="font-bold mb-4">{{page()==='entrega'?'Nuevo vale de entrega':page()==='devolucion'?'Registrar
+
+                devolución':'Nuevo traspaso'}}</h3>
+
+            <div class="grid sm:grid-cols-2 gap-4">
+
+                <label class="field sm:col-span-2">Captura de código (lector o QR leído externamente)<div
+
+                        class="flex gap-2"><input class="flex-1" [(ngModel)]="scanner" placeholder="Ej. ALT-024"
+
+                            (keyup.enter)="scan()"><button class="btn-light" (click)="scan()">Buscar</button></div>
+
+                    </label>
+
+                <label class="field">Artículo<select [(ngModel)]="itemId">@for(i of store.data().items;track i.id){
+
+                        <option [value]="i.id">{{i.id}} · {{i.name}} ({{i.warehouse}})</option>}</select></label>
+
+                @if(page()!=='traspaso'){<label class="field">Trabajador<select [(ngModel)]="workerId">@for(w of
+
+                        store.data().workers;track w.id){<option [value]="w.id">{{w.name}} · {{w.id}}</option>
+
+                        }</select></label>}
+
+                @if(page()==='traspaso'){<label class="field">Almacén destino<select [(ngModel)]="target">@for(w of
+
+                        store.warehouses;track w){<option [value]="w">{{w}}</option>}</select></label>}
+
+                <label class="field">Cantidad<input type="number" min="1" step="1" [(ngModel)]="quantity"></label>
+
+                @if(page()==='entrega'&&role()==='supervisor'){<label class="field">Autorización excepcional
+
+                    (supervisor)<input [(ngModel)]="supervisorCode" placeholder="AUTORIZAR"></label>}
+
+            </div>@if(selected()){<div class="mt-4 text-sm bg-slate-50 p-3 rounded">Disponible:
+
+                <b>{{selected()!.quantity}}</b> · Inspección: <b>{{selected()!.inspection}}</b> · Estado:
+
+                <b>{{selected()!.status}}</b> · Límite: <b>{{selected()!.limit}}</b></div>}
+
+            <div class="mt-5 flex gap-3"><button class="btn-main"
+
+                    (click)="run(page()==='entrega'?'entrega':page()==='devolucion'?'devolucion':'traspaso')">Confirmar
+
+                    {{page()}}</button></div>
+
+        </div>
+
+        }
+
+        @if(page()==='inventario'){
+
+
+
+        <div class="panel mb-5">
+
+            <h3 class="font-bold mb-3">Existencias por almacén</h3>
+
+            <div class="overflow-x-auto">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Código</th>
+
+                            <th>Artículo</th>
+
+                            <th>Almacén</th>
+
+                            <th>Disponible</th>
+
+                            <th>Inspección</th>
+
+                            <th>Estado</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>@for(i of store.data().items;track i.id){<tr>
+
+                            <td>{{i.id}}</td>
+
+                            <td>{{i.name}}</td>
+
+                            <td>{{i.warehouse}}</td>
+
+                            <td>{{i.quantity}}</td>
+
+                            <td>{{i.inspection}}</td>
+
+                            <td>{{i.status}}</td>
+
+                        </tr>}</tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+        @if(role()==='supervisor'||role()==='compras'){<div class="panel">
+
+            <h3 class="font-bold mb-3">Alta de artículo</h3>
+
+            <div class="grid sm:grid-cols-3 gap-3"><label class="field">Código<input
+
+                        [(ngModel)]="newItem.id"></label><label class="field">Descripción<input
+
+                        [(ngModel)]="newItem.name"></label><label class="field">Tipo<select [(ngModel)]="newItem.kind">
+
+                        <option value="pieza">Pieza individual</option>
+
+                        <option value="consumible">Consumible</option>
+
+                    </select></label><label class="field">Almacén<select [(ngModel)]="newItem.warehouse">@for(w of
+
+                        store.warehouses;track w){<option [value]="w">{{w}}</option>}</select></label><label
+
+                    class="field">Cantidad<input type="number" min="0" [(ngModel)]="newItem.quantity"></label><label
+
+                    class="field">Límite por trabajador<input type="number" min="1"
+
+                        [(ngModel)]="newItem.limit"></label><label class="field">Inspección<select
+
+                        [(ngModel)]="newItem.inspection">
+
+                        <option value="vigente">Vigente</option>
+
+                        <option value="vencida">Vencida</option>
+
+                        <option value="no_aplica">No aplica</option>
+
+                    </select></label><label class="field">Estado<select [(ngModel)]="newItem.status">
+
+                        <option value="apto">Apto</option>
+
+                        <option value="no_apto">No apto</option>
+
+                    </select></label></div><button class="btn-main mt-4" (click)="registerItem()">Agregar
+
+                artículo</button>
+
+        </div>}
+
+        }
+
+        @if (page() === 'almacenes') {
+            <app-almacenes></app-almacenes>
+        }
+
+        @if(page()==='trabajadores'){
+
+        @if(role()==='rh'||role()==='supervisor'){<div class="panel mb-5">
+
+            <h3 class="font-bold mb-3">Registrar trabajador</h3>
+
+            <div class="grid sm:grid-cols-3 gap-3"><label class="field">Número empleado<input
+
+                        [(ngModel)]="worker.id"></label><label class="field">Nombre completo<input
+
+                        [(ngModel)]="worker.name"></label><label class="field">Área<select
+
+                        [(ngModel)]="worker.area">@for(w of store.warehouses;track w){<option [value]="w">{{w}}</option>
+
+                        }</select></label></div><button class="btn-main mt-4"
+
+                (click)="registerWorker()">Registrar</button>
+
+        </div>}
+
+        <div class="panel overflow-x-auto">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Empleado</th>
+
+                        <th>Nombre</th>
+
+                        <th>Área</th>
+
+                        <th>Estado</th>
+
+                        <th>Adeudos</th>
+
+                        <th>Acción</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>@for(w of store.data().workers;track w.id){<tr>
+
+                        <td>{{w.id}}</td>
+
+                        <td>{{w.name}}</td>
+
+                        <td>{{w.area}}</td>
+
+                        <td>{{w.active?'Activo':'Baja'}}</td>
+
+                        <td>{{store.pending(w.id).length}}</td>
+
+                        <td>@if(w.active&&(role()==='rh'||role()==='supervisor')){<button class="btn-light"
+
+                                (click)="deactivate(w.id)">Dar de baja</button>}</td>
+
+                    </tr>}</tbody>
+
+            </table>
+
+        </div>
+
+        }
+
+        @if(page()==='movimientos'){
+
+        <div class="flex justify-end mb-3"><button class="btn-light" (click)="exportCsv()">Exportar CSV</button></div>
+
+        <div class="panel overflow-x-auto">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Folio</th>
+
+                        <th>Fecha</th>
+
+                        <th>Operación</th>
+
+                        <th>Artículo</th>
+
+                        <th>Empleado</th>
+
+                        <th>Cantidad</th>
+
+                        <th>Origen</th>
+
+                        <th>Destino</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>@for(m of store.data().movements;track m.folio){<tr>
+
+                        <td>{{m.folio}}</td>
+
+                        <td>{{m.date.slice(0,19).replace('T',' ')}}</td>
+
+                        <td>{{m.type}}</td>
+
+                        <td>{{m.itemId}}</td>
+
+                        <td>{{m.workerId}}</td>
+
+                        <td>{{m.quantity}}</td>
+
+                        <td>{{m.from}}</td>
+
+                        <td>{{m.to}}</td>
+
+                    </tr>}@empty{<tr>
+
+                        <td colspan="8">Sin movimientos registrados</td>
+
+                    </tr>}</tbody>
+
+            </table>
+
+        </div>
+
+        }
+
+        <footer class="text-xs text-slate-500 mt-8 print:hidden">Prototipo local para hackatón · Los datos se guardan en
+
+            este navegador · No usar para inventario real</footer>
+
+    </main>
+
+</div>
+
+}

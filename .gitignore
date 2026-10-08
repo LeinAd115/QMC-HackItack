@@ -1,0 +1,12 @@
+
+node_modules/
+.angular/
+dist/
+.venv/
+venv/
+__pycache__/
+.env
+.env.*
+!.env.example
+*.key
+*.pem

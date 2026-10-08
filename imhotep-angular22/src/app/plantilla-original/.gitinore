@@ -1,0 +1,19 @@
+# Angular
+node_modules/
+.angular/
+dist/
+coverage/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Configuraciones privadas
+.env
+.env.*
+!.env.example
+
+# Archivos temporales
+*.log

@@ -1,0 +1,58 @@
+
+<section class="p-4 md:p-6">
+
+  <h2 class="text-xl font-bold mb-6">
+    Almacenes registrados
+  </h2>
+
+  @if (cargando()) {
+    <div class="flex items-center gap-3 py-8">
+      <span class="loading loading-spinner loading-md"></span>
+      <p>Cargando almacenes...</p>
+    </div>
+  }
+
+  @if (error()) {
+    <div role="alert" class="alert alert-error mb-5">
+      <span>{{ error() }}</span>
+
+      <button
+        type="button"
+        class="btn btn-sm"
+        (click)="cargarAlmacenes()">
+        Reintentar
+      </button>
+    </div>
+  }
+
+  @if (!cargando() && !error()) {
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+      @for (almacen of almacenes(); track almacen.id) {
+        <div class="card bg-base-100 shadow-md border border-base-300">
+          <div class="card-body">
+
+            <h3 class="card-title">
+              🏭 {{ almacen.nombre }}
+            </h3>
+
+            <p class="text-sm opacity-70">
+              ID del almacén: {{ almacen.id }}
+            </p>
+
+            <div class="card-actions justify-end mt-4">
+              <button class="btn btn-primary btn-sm" disabled>
+                Ver inventario (próximamente)
+              </button>
+            </div>
+
+          </div>
+        </div>
+      } @empty {
+        <p>No hay almacenes registrados.</p>
+      }
+
+    </div>
+  }
+
+</section>
